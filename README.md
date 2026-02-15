@@ -92,7 +92,7 @@ pip install torch --index-url \
   https://download.pytorch.org/whl/cu121
 
 # Remaining dependencies
-pip install pymatgen pandas "numpy<2"
+pip install pymatgen pandas ase "numpy<2"
 ```
 
 </td>
@@ -104,7 +104,7 @@ pip install torch --index-url \
   https://download.pytorch.org/whl/cpu
 
 # Remaining dependencies
-pip install pymatgen pandas "numpy<2"
+pip install pymatgen pandas ase "numpy<2"
 ```
 
 </td>
@@ -132,6 +132,17 @@ python predict.py --checkpoint trained_model/best.pt --csv new_structures.csv --
 
 # Predict a single structure
 python predict.py --checkpoint trained_model/best.pt --structure POSCAR --charge 0 --theory HSE
+```
+
+```bash
+# Relax a structure (positions only)
+python optimize.py --checkpoint trained_model/best.pt --structure POSCAR --charge 0 --theory HSE
+
+# Full relaxation (cell + positions)
+python optimize.py --checkpoint trained_model/best.pt --structure POSCAR --relax_cell --fmax 0.01
+
+# Batch relax from CSV
+python optimize.py --checkpoint trained_model/best.pt --csv data.csv --fraction 0.01 --out relaxed.csv
 ```
 
 ---
@@ -311,6 +322,87 @@ trained_model/
 
 ---
 
+## Geometry Optimisation
+
+`optimize.py` wraps the trained DefectNet model as an [ASE Calculator](https://wiki.fysik.dtu.dk/ase/ase/calculators/calculators.html), so you can use any ASE optimiser (BFGS, LBFGS, FIRE) to relax crystal structures with the ML force field.
+
+### How it works
+
+```
+                 ASE Optimiser (BFGS / LBFGS / FIRE)
+                          |
+                          v
+               DefectNetCalculator (ASE Calculator)
+                 |         |          |
+              energy    forces     stress      <-- from trained model
+                          |
+                          v
+               Update positions (and cell if --relax_cell)
+                          |
+                     Converged?  -->  relaxed structure
+```
+
+The `DefectNetCalculator` class can also be used directly in Python:
+
+```python
+from optimize import DefectNetCalculator
+from ase.io import read
+from ase.optimize import BFGS
+
+atoms = read("POSCAR")
+calc = DefectNetCalculator(
+    checkpoint="trained_model/best.pt",
+    charge=0, theory="hse", device="cpu",
+)
+atoms.calc = calc
+
+opt = BFGS(atoms)
+opt.run(fmax=0.05, steps=200)
+
+print(f"Relaxed energy: {atoms.get_potential_energy():.4f} eV")
+```
+
+<details>
+<summary><b>CLI Arguments</b></summary>
+
+| Argument | Default | Description |
+|:---------|:--------|:------------|
+| `--checkpoint` | (required) | Path to `.pt` checkpoint |
+| `--structure` | None | Single structure file (POSCAR/CIF/JSON) |
+| `--csv` | None | CSV with Structure, Charge, LevelOfTheory columns |
+| `--fraction` | 1.0 | Fraction of CSV rows to relax |
+| `--charge` | 0 | Charge state (single structure mode) |
+| `--theory` | hse | Level of theory (single structure mode) |
+| `--fmax` | 0.05 | Force convergence threshold [eV/A] |
+| `--steps` | 200 | Max optimisation steps |
+| `--optimizer` | bfgs | ASE optimiser (`bfgs`, `lbfgs`, `fire`) |
+| `--relax_cell` | false | Relax cell parameters + positions |
+| `--trajectory` | None | Save ASE `.traj` file |
+| `--out` | relaxed.csv | Output CSV (batch mode) |
+| `--out_structure` | None | Save relaxed structure file (single mode) |
+| `--device` | cpu | Device (`cpu` or `cuda`) |
+
+</details>
+
+<details>
+<summary><b>Batch relaxation output CSV columns</b></summary>
+
+| Column | Description |
+|:-------|:------------|
+| `csv_idx` | Row index in the original CSV |
+| `Structure_relaxed` | JSON-serialised relaxed pymatgen Structure |
+| `Charge` | System charge |
+| `LevelOfTheory` | DFT functional |
+| `num_atoms` | Number of atoms |
+| `energy_relaxed` | Relaxed total energy [eV] |
+| `forces_relaxed` | Final forces [eV/A] |
+| `max_force` | Maximum force magnitude [eV/A] |
+| `converged` | Whether optimisation converged within `--steps` |
+
+</details>
+
+---
+
 ## Project Structure
 
 ```
@@ -320,6 +412,7 @@ DefectNet/
   dataset.py        # Dataset, collate function, DataLoader creation
   train.py          # Multi-task training loop with prediction CSV saving
   predict.py        # Inference script (batch CSV or single structure)
+  optimize.py       # Geometry optimisation via ASE + trained model
   data.csv          # Sample dataset (8,221 structures, mixed charge & theory)
   README.md         # This file
 ```
@@ -331,6 +424,7 @@ DefectNet/
 | `dataset.py` | `ForceFieldDataset` with on-the-fly graph building (optional disk cache), `collate_fn` for variable-size graphs, train/val/test splitting |
 | `train.py` | AdamW + ReduceLROnPlateau, gradient clipping, best/last checkpointing, per-split prediction CSVs |
 | `predict.py` | Inference on batch CSV or single structure file, with fraction support |
+| `optimize.py` | ASE Calculator wrapper (`DefectNetCalculator`) + geometry optimisation with BFGS/LBFGS/FIRE, single or batch mode, optional cell relaxation |
 
 ---
 
@@ -359,7 +453,19 @@ January 2025
 
 ## References
 
-If you use DefectNet or find it useful, please consider citing the following works that inspired or informed this project:
+If you use DefectNet, please cite:
+
+> **Accelerating defect predictions in semiconductors using graph neural networks**
+> Md Habibur Rahman, Prince Gollapalli, Panayotis Manganaris, Satyesh Kumar Yadav, Ghanshyam Pilania, Brian DeCost, Kamal Choudhary, and Arun Mannodi-Kanakkithodi,
+> *APL Mach. Learn.* **2**, 016122 (2024).
+> [DOI: 10.1063/5.0176333](https://doi.org/10.1063/5.0176333)
+
+> **DeFecT-FF: Accelerated Modeling of Defects in Cd-Zn-Te-Se-S Compounds Combining High-Throughput DFT and Machine Learning Force Fields**
+> Md Habibur Rahman and Arun Mannodi-Kanakkithodi,
+> *arXiv* preprint arXiv:2510.23514 (2025).
+> [arXiv: 2510.23514](https://arxiv.org/abs/2510.23514)
+
+### Related works
 
 1. **CGCNN** -- Crystal Graph Convolutional Neural Networks
    T. Xie and J. C. Grossman, *Phys. Rev. Lett.* **120**, 145301 (2018).
