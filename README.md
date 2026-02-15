@@ -11,7 +11,7 @@
 [![Python 3.10](https://img.shields.io/badge/Python-3.10-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
 
 *Predict DFT energy, forces, and stress for crystal structures with point defects.*
-*Written from scratch in PyTorch -- no dependency on ALIGNN or other GNN libraries.*
+*Written from scratch in PyTorch*
 
 </div>
 
