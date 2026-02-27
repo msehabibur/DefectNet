@@ -1,6 +1,5 @@
 """
 model.py
-DefectNet Force Field Model  (written from scratch, no ALIGNN dependency).
 
 Architecture
 ============
