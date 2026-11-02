@@ -1,0 +1,9 @@
+*.pt
+*.ckpt
+__pycache__/
+*.egg-info/
+outputs/
+lightning_logs/
+checkpoints*/
+*.lmdb
+.DS_Store

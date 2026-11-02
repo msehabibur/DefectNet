@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "defectnet"
+version = "1.0.0"
+description = "Machine-learned interatomic potential for charged defects in chalcogenide semiconductors"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "Md Habibur Rahman" }]
+# TACE itself is installed from source at a fixed commit with patches/tace-057e463.patch (see README)
+dependencies = ["ase>=3.23", "numpy", "torch"]
+
+[project.scripts]
+defectnet-data = "defectnet.dataset:main"
+defectnet-train = "defectnet.train:main"
+
+[tool.setuptools]
+packages = ["defectnet"]

@@ -1,0 +1,61 @@
+diff --git a/tace/lightning/loss_skip.py b/tace/lightning/loss_skip.py
+index 6abefa2..86dd656 100644
+--- a/tace/lightning/loss_skip.py
++++ b/tace/lightning/loss_skip.py
+@@ -43,6 +43,12 @@ class LossSkipController:
+             self.ema_alpha = None
+ 
+         self.loss_ema = None
++        # The EMA lives only in memory, so a resumed run restarts it from one batch. With
++        # start_step already passed, the large-loss test was live from that first batch on, one rank
++        # over its own 20x threshold skipped the step for all ranks, and a skipped step never updates
++        # the EMA -- one resumed run skipped every step from 1001 to 2864. Arm the test only once
++        # this process has averaged ema_window losses.
++        self.n_ema = 0
+ 
+     def _update_ema(self, loss_val: float):
+         if self.ema_alpha is None:
+@@ -53,6 +59,7 @@ class LossSkipController:
+         else:
+             a = self.ema_alpha
+             self.loss_ema = (1.0 - a) * self.loss_ema + a * loss_val
++        self.n_ema += 1
+ 
+     def _get_dynamic_threshold(self):
+         if self.loss_ema is None:
+@@ -101,6 +108,7 @@ class LossSkipController:
+         elif self.skip_large:
+             enable_large = (
+                 self.start_step is not None and global_step >= self.start_step
++                and (self.ema_window is None or self.n_ema >= self.ema_window)
+             )
+ 
+             if enable_large and threshold is not None:
+diff --git a/tace/models/_e3nn/representation.py b/tace/models/_e3nn/representation.py
+index fd28ebd..4051fe2 100644
+--- a/tace/models/_e3nn/representation.py
++++ b/tace/models/_e3nn/representation.py
+@@ -156,6 +156,11 @@ class Representation(torch.nn.Module):
+                     if k in self.invariant_property
+                 },
+                 bias=False,
++                # upstream tace 0.2.1 omits this required arg, so ANY enabled invariant
++                # universal embedding (total_charge included) raises TypeError at build time.
++                # "silu" matches MLP's own default act and keeps act(0)=0, which is what makes
++                # a zero-initialised projection a strict extension of the pretrained model.
++                activation="silu",
+             )
+ 
+         # === Edge Update ===
+@@ -335,6 +340,11 @@ class Representation(torch.nn.Module):
+         )
+         if hasattr(self, "uie_embedding"):
+             uie_feats = self.uie_embedding(data)
++            # UniversalInvariantEmbedding returns (N, 1, C), which assumes 3-D node features.
++            # In this OAM architecture node_feats is (N, C), so the bare sum broadcasts to
++            # (N, C, C) and blows up in the interaction block further down. Match the rank.
++            while uie_feats.dim() > node_feats.dim():
++                uie_feats = uie_feats.squeeze(1)
+             node_feats = node_feats + uie_feats
+         else:
+             uie_feats = None
