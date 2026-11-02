@@ -9,7 +9,7 @@ and reruns DefectNet on one example, printing its numbers next to the ones in th
 | `fig7_fermi_level.ipynb` | Fig. 7 | the 14 charge states of CdSe<sub>0.06</sub>Te<sub>0.94</sub>, their formation energies on the HSE06 band edges and the self-consistent Fermi level | 8 min |
 | `fig8a_configuration_coordinate.ipynb` | Fig. 8a | configuration coordinate diagrams and capture barriers of Bi<sub>Cd</sub> + Bi<sub>Se</sub> in CdSe<sub>0.06</sub>Te<sub>0.94</sub>, and its local structure against DFT | 10 min |
 | `fig8b_vacancy_neb.ipynb` | Fig. 8b | climbing-image NEB of V<sub>Cd</sub><sup>2-</sup>, V<sub>Ag</sub><sup>-</sup> and V<sub>Cu</sub><sup>-</sup> | 36 min |
-| `fig8d_phonons.ipynb` | Fig. 8d | Γ-point phonons and vibrational entropy of the same complex in five charge states | over 60 min |
+| `fig8d_phonons.ipynb` | Fig. 8d | Γ-point phonons and vibrational entropy of the same complex in five charge states | 60 min |
 
 Run them from this folder. The first cell installs what is missing and downloads `DefectNet-v1.0.pt` from the v1.0
 release (or uses a copy in this folder or in `examples/`).
