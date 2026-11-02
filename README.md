@@ -1,18 +1,16 @@
 # DefectNet
 
 DefectNet is a machine-learned interatomic potential for neutral and charged point defects in chalcogenide
-semiconductors (II–VI such as CdTe, I–III–VI<sub>2</sub> such as CuInS<sub>2</sub>, I<sub>2</sub>–II–IV–VI<sub>4</sub>
+semiconductors (II-VI such as CdTe, I-III-VI<sub>2</sub> such as CuInS<sub>2</sub>, I<sub>2</sub>-II-IV-VI<sub>4</sub>
 such as Cu<sub>2</sub>ZnSnS<sub>4</sub>). One set of weights covers six levels of theory, each with its own output head,
 and takes the total charge of the cell as an input, so a charged defect supercell is relaxed the same way as a
 neutral one. The total charge enters in two places: a charge embedding in every atomic feature, and a
 charge-equilibration (QEq) head that solves for atomic charges summing to the total charge and adds their periodic
 electrostatic energy.
 
-It is a fine-tune of the TECE-OAM-RRA-1.0 foundation model of the [TACE](https://github.com/xvzemin/tace)
-architecture (Xu, Xie and Hu), trained on 520,660 DFT frames with total charges from −5 to +5, with TACE's QEq
-electrostatics added in a fourth fine-tuning stage. This repository
-gives you the model as an ASE calculator, the defect workflows built on it, and the files to fine-tune it on
-your own calculations.
+DefectNet was fine-tuned from the TECE-OAM-RRA-1.0 foundation model of the [TACE](https://github.com/xvzemin/tace)
+architecture (Xu, Xie and Hu) on 520,660 DFT frames with total charges from -5 to +5. The QEq electrostatics of
+TACE were added in a fourth fine-tuning stage.
 
 ## Install
 
@@ -38,7 +36,7 @@ The weights (`DefectNet-v1.0.pt`, 891 MB, md5 `3d1f42346c153044293e6882f35b8e33`
 gh release download v1.0 -R msehabibur/DefectNet -p DefectNet-v1.0.pt
 ```
 
-## Use it
+## Usage
 
 ```python
 from ase.build import bulk
@@ -56,7 +54,7 @@ The charge is read from `atoms.info["total_charge"]` (q = +1 means one electron 
 `dn.charged(atoms, q)` set it for you; if you attach the calculator yourself, set it first, because a cell without
 it is treated as neutral.
 
-Use supercells of about the size of the defect cells DefectNet was trained on (215–289 atoms). The charge enters
+Use supercells of about the size of the defect cells DefectNet was trained on (215-289 atoms). The charge enters
 the features of every atom, so the energy cost of a charge depends on the cell size: in a 64-atom cell the
 formation energies of charged defects come out unphysical.
 
@@ -67,31 +65,30 @@ formation energies of charged defects come out unphysical.
 | `"PBE+U"` | 2 | PBE+U |
 | `"HSE06"` | 3 | HSE06 with PBE pseudopotentials and geometries |
 | `"HSE06(PBEsol)"` | 4 | HSE06 on PBEsol (VASP `GGA = PS`) |
-| `"HSE06+SOC"` | 5 | HSE06(PBEsol) with spin–orbit coupling |
+| `"HSE06+SOC"` | 5 | HSE06(PBEsol) with spin-orbit coupling |
 
-What the package does:
+Main functions:
 
 | function | what it gives |
 |---|---|
 | `dn.load(model, functional, device)` | ASE calculator for one head |
 | `dn.relax(atoms, calc, q)` | fixed-cell relaxation from a rattled start (10 % of the shortest bond, the ShakeNBreak default) |
-| `dn.formation_energy(e_def, e_bulk, change, mu, q, vbm, e_fermi)` | E<sub>f</sub> = E<sub>def</sub> − E<sub>bulk</sub> − Σ n<sub>i</sub> μ<sub>i</sub> + q (E<sub>VBM</sub> + E<sub>F</sub>) |
+| `dn.formation_energy(e_def, e_bulk, change, mu, q, vbm, e_fermi)` | E<sub>f</sub> = E<sub>def</sub> - E<sub>bulk</sub> - Σ n<sub>i</sub> μ<sub>i</sub> + q (E<sub>VBM</sub> + E<sub>F</sub>) |
 | `dn.transition_levels(ef0, gap)` | charge-transition levels inside the gap, negative-U pairs included |
 | `dn.vacancy_hop(pristine, site, calc, q)` | vacancy migration barrier by climbing-image NEB (IDPP start) |
 | `defectnet-data` | converts your DFT runs into training frames |
 
 Worked scripts are in `examples/`: `01_quickstart.py` (energies at each head, a charged vacancy),
 `02_formation_energy.py` (V<sub>Cd</sub> in CdTe against the Fermi level with DefectNet chemical potentials) and
-`03_vacancy_neb.py` (V<sub>Cd</sub> migration barrier at two charge states). `tutorial.ipynb` runs the whole path
-in one notebook, with its outputs saved: install, load the weights, a charged-vacancy formation-energy diagram, a
-migration barrier, a short fine-tune on the CdTe frames in `examples/data/`, and the same calls with the fine-tuned model.
-`examples/paper/` has one notebook per figure of the DefectNet paper (Figs. 6a, 7, 8a, 8b and 8d), each with
-its DFT data as Arrow tables and its outputs saved; `examples/paper/README.md` lists them and their run times.
+`03_vacancy_neb.py` (V<sub>Cd</sub> migration barrier at two charge states). `tutorial.ipynb` goes through the
+same steps in one notebook and ends with a short fine-tune on the CdTe frames in `examples/data/`.
+`examples/paper/` has one notebook for each of Figs. 6a, 7, 8a, 8b and 8d of the DefectNet paper, with the DFT
+data they use (see `examples/paper/README.md`).
 
 DefectNet does not predict band edges. The VBM and the gap in a formation-energy diagram come from a DFT
 calculation of the pristine cell at the same level of theory.
 
-## Fine-tune it on your own system
+## Fine-tuning
 
 1. Collect frames. Every ionic step of a run becomes one frame, labelled with its head and its charge. Anything
    `ase.io.read` reads works (VASP `vasprun.xml` / `OUTCAR`, Quantum ESPRESSO `pw.x` output, and others):
@@ -129,17 +126,17 @@ calculation of the pristine cell at the same level of theory.
    tace-export-train -m checkpoints/last.ckpt -o my_model.pt --dtype float32
    ```
 
-## Accuracy and limits
+## Accuracy and limitations
 
-These numbers are for `DefectNet-v1.0.pt` and are reported in the manuscript.
+The numbers below are for `DefectNet-v1.0.pt` and come from the DefectNet paper.
 
 - 10,573 held-out DFT frames: energy RMSE 5.0 meV/atom (3.9 meV/atom for the 9,304 defect-supercell frames, 2.3
   meV/atom for PBEsol), force RMSE 13.9 meV/Å. Without the QEq head (charge embedding only) the energy RMSE on the
   same frames is 5.6 meV/atom.
-- 172 PBEsol charge states in 15 semiconductors (216–289 atoms) relaxed from rattled starts, each side with
-  chemical potentials from its own energies of the competing phases: formation-energy RMSE 0.34 eV; transition-level
-  RMSE 0.22 eV over 134 levels and 0.21 eV over the 58 inside the gap.
-- Vacancy migration barriers by climbing-image NEB for 17 hops in charge states from −2 to +2: RMSE 0.078 eV against
+- 172 PBEsol charge states in 15 semiconductors (216-289 atoms) relaxed from rattled starts, with DFT and
+  DefectNet each taking chemical potentials from their own energies of the competing phases: formation-energy
+  RMSE 0.34 eV; transition-level RMSE 0.22 eV over 134 levels and 0.21 eV over the 58 inside the gap.
+- Vacancy migration barriers by climbing-image NEB for 17 hops in charge states from -2 to +2: RMSE 0.078 eV against
   DFT NEB, 0.043 eV over the 14 cation-vacancy hops.
 - The PBE and hybrid heads give formation energies off by about 1 eV (root-mean-square) even on geometries relaxed
   with the PBEsol head. Use the PBEsol head for defect energetics.

@@ -1,15 +1,15 @@
 # Paper notebooks
 
 One notebook per figure panel of the DefectNet paper. Each one loads the DFT data from `data/`, redraws the panel,
-and runs DefectNet itself on a worked example, printing its numbers next to the ones in the paper.
+and reruns DefectNet on one example, printing its numbers next to the ones in the paper.
 
 | notebook | panel | what it computes with DefectNet | time on one A100 |
 |---|---|---|---|
 | `fig6a_formation_energy.ipynb` | Fig. 6a | relaxations of V<sub>Cu</sub> in CuGaSeTe in five charge states, with their FIRE trajectories (all 172 cells with `RUN_ALL = True`) | 6 min |
-| `fig7_fermi_level.ipynb` | Fig. 7 | the 14 charge states of CdSe<sub>0.06</sub>Te<sub>0.94</sub>, their formation energies on the HSE06 band edges and the self-consistent Fermi level | 7 min |
+| `fig7_fermi_level.ipynb` | Fig. 7 | the 14 charge states of CdSe<sub>0.06</sub>Te<sub>0.94</sub>, their formation energies on the HSE06 band edges and the self-consistent Fermi level | 8 min |
 | `fig8a_configuration_coordinate.ipynb` | Fig. 8a | configuration coordinate diagrams and capture barriers of Bi<sub>Cd</sub> + Bi<sub>Se</sub> in CdSe<sub>0.06</sub>Te<sub>0.94</sub>, and its local structure against DFT | 10 min |
-| `fig8b_vacancy_neb.ipynb` | Fig. 8b | climbing-image NEB of V<sub>Cd</sub><sup>2−</sup>, V<sub>Ag</sub><sup>−</sup> and V<sub>Cu</sub><sup>−</sup> | 35 min |
-| `fig8d_phonons.ipynb` | Fig. 8d | Γ-point phonons and vibrational entropy of the same complex in five charge states | 60 min |
+| `fig8b_vacancy_neb.ipynb` | Fig. 8b | climbing-image NEB of V<sub>Cd</sub><sup>2-</sup>, V<sub>Ag</sub><sup>-</sup> and V<sub>Cu</sub><sup>-</sup> | 36 min |
+| `fig8d_phonons.ipynb` | Fig. 8d | Γ-point phonons and vibrational entropy of the same complex in five charge states | over 60 min |
 
 Run them from this folder. The first cell installs what is missing and downloads `DefectNet-v1.0.pt` from the v1.0
 release (or uses a copy in this folder or in `examples/`).
@@ -39,7 +39,7 @@ of Fig. 7, with the same columns:
 | `host`, `defect`, `charge`, `q` | semiconductor, defect, charge-state label and total charge (q = +1: one electron removed) |
 | `natoms`, `E_dft` | number of atoms and DFT total energy |
 | `vbm`, `gap` | VBM and band gap used for this cell's formation energy in the paper (PBEsol, pristine cell) |
-| `change_elements`, `change_counts` | atoms added (+1) and removed (−1) relative to the pristine cell |
+| `change_elements`, `change_counts` | atoms added (+1) and removed (-1) relative to the pristine cell |
 | `vertex`, `mu_elements` | chemical-potential limit of the benchmark and its elements |
 | `mu_values`, `mu_defectnet` | chemical potentials at that limit (eV/atom) from DFT and from DefectNet energies of the competing phases |
 | `Ef0_dft`, `Ef0_defectnet_paper` | formation energy at E<sub>F</sub> = VBM from DFT and from DefectNet (paper), each with its own chemical potentials |
